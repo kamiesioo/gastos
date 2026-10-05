@@ -1,0 +1,7 @@
+# Lo que NO se publica en Cloudflare (la raíz del repo es el directorio de assets).
+wrangler.jsonc
+.assetsignore
+.gitignore
+.nojekyll
+README.md
+supabase
