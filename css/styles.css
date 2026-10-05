@@ -126,7 +126,15 @@ input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 4px co
 .icon-btn.danger:hover { background: color-mix(in srgb, var(--red) 12%, transparent); color: var(--red); }
 
 /* ============ Layout ============ */
+.root { min-height: 100vh; display: flex; flex-direction: column; }
+.root > .app, .root > .auth-shell, .root > .splash { flex: 1; }
 .splash { min-height: 70vh; display: grid; place-items: center; padding: 24px; }
+
+.site-footer {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 10px; padding: 18px 16px 22px;
+  font-size: 13px; color: var(--muted); border-top: 1px solid var(--border); background: var(--bg);
+}
+.site-footer strong { color: var(--text); font-weight: 650; }
 .spinner { width: 28px; height: 28px; border-radius: 50%; border: 3px solid var(--border); border-top-color: var(--blue); animation: spin .8s linear infinite; }
 .demo-banner { background: #fef3c7; color: #78350f; text-align: center; padding: 6px 12px; font-size: 13px; }
 
@@ -298,7 +306,7 @@ input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 4px co
 .toast.err { background: var(--red); color: #fff; }
 
 /* ============ Login / registro ============ */
-.auth-shell { min-height: 100vh; display: grid; grid-template-columns: 1fr; }
+.auth-shell { display: grid; grid-template-columns: 1fr; }
 .auth-aside { display: none; }
 .auth-main { display: grid; place-items: center; padding: 24px 16px; }
 .auth-card {

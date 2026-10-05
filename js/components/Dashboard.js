@@ -152,7 +152,7 @@ export function Dashboard({ store, user, onLogout }) {
   return html`
     <div className="app">
       <header className="topbar">
-        <div className="brand"><${Logo} size=${30} /><span>Gastos</span></div>
+        <div className="brand"><${Logo} size=${30} /><span>Finanzas Korion</span></div>
         <div className="topbar-right">
           <span className="user-chip" title=${user.email}>${user.email}</span>
           <button type="button" className="btn ghost small" onClick=${logout}><${Icon} name="logout" size=${16} /> Salir</button>

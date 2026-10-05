@@ -2,6 +2,7 @@ import { html, useState, useEffect } from './deps.js';
 import { createStore, isDemo } from './store.js';
 import { AuthScreen } from './components/AuthScreen.js';
 import { Dashboard } from './components/Dashboard.js';
+import { Footer } from './components/Footer.js';
 
 export function App() {
   const [store, setStore] = useState(null);
@@ -35,5 +36,6 @@ export function App() {
     <div className="root">
       ${isDemo && html`<div className="demo-banner">Modo demo: los datos se guardan sólo en este navegador. Configurá Supabase en <code>js/config.js</code>.</div>`}
       ${screen}
+      <${Footer} />
     </div>`;
 }

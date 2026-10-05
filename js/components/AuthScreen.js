@@ -52,7 +52,7 @@ export function AuthScreen({ store, onAuth }) {
   return html`
     <div className="auth-shell">
       <aside className="auth-aside">
-        <div className="brand"><${Logo} size=${38} /><span>Gastos</span></div>
+        <div className="brand"><${Logo} size=${38} /><span>Finanzas Korion</span></div>
         <div className="auth-pitch">
           <h1>Tus finanzas,<br />claras y bajo control.</h1>
           <ul>
@@ -82,7 +82,7 @@ export function AuthScreen({ store, onAuth }) {
               </div>`
           : html`
               <form className="auth-card reveal" onSubmit=${submit} noValidate>
-                <div className="brand brand-mobile"><${Logo} size=${34} /><span>Gastos</span></div>
+                <div className="brand brand-mobile"><${Logo} size=${34} /><span>Finanzas Korion</span></div>
 
                 <div className="seg" role="tablist">
                   <button type="button" role="tab" aria-selected=${!signup} className=${!signup ? 'on' : ''} onClick=${() => switchMode('login')}>Ingresar</button>

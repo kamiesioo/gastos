@@ -1,4 +1,4 @@
-# Gastos
+# Finanzas Korion
 
 Finanzas personales con **React + Supabase**: cuentas de usuario, ingresos, gastos por categoría, deudas en cuotas, meta de ahorro y gráfico mensual animado.
 
