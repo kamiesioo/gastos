@@ -1,6 +1,6 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 import { SUPABASE_ESM } from './deps.js';
-import { planIncome, round2, summarize } from './finance.js';
+import { dueDebts, round2, savingTarget, summarize, monthOf } from './finance.js';
 
 export const isDemo = !SUPABASE_URL || !SUPABASE_ANON_KEY;
 
@@ -69,6 +69,9 @@ async function createSupabaseStore() {
     async deleteTransaction(id) {
       unwrap(await sb.rpc('delete_transaction', { p_id: id }));
     },
+    async payMonthDebts({ date }) {
+      return unwrap(await sb.rpc('pay_month_debts', { p_date: date }));
+    },
     async addDebt({ name, total, installment }) {
       unwrap(await sb.rpc('add_debt', { p_name: name, p_total: total, p_installment: installment }));
     },
@@ -117,39 +120,53 @@ function createLocalStore() {
 
     async addIncome({ amount, note, date }) {
       const s = read();
-      const plan = planIncome(s.debts, amount);
       const incomeId = id();
+      const saving = savingTarget(amount, s.savingPct);
       s.transactions.push({ id: incomeId, type: 'income', amount, category: 'Ingreso', note, occurred_on: date, created_at: now() });
-      for (const p of plan.payments) {
-        const debt = s.debts.find((d) => d.id === p.debt_id);
-        debt.balance = round2(debt.balance - p.amount);
-        s.transactions.push({ id: id(), type: 'debt_payment', amount: p.amount, category: 'Deuda', note: p.name, debt_id: p.debt_id, income_id: incomeId, occurred_on: date, created_at: now() });
+      if (saving > 0) {
+        s.transactions.push({ id: id(), type: 'saving', amount: saving, category: 'Ahorro', note: null, income_id: incomeId, occurred_on: date, created_at: now() });
       }
       write(s);
-      return { payments: plan.payments, net: plan.net };
+      return { saving, net: round2(amount - saving) };
+    },
+    async payMonthDebts({ date }) {
+      const s = read();
+      const due = dueDebts(s.debts, s.transactions, monthOf(date));
+      if (due.total <= 0) throw new Error('No hay cuotas pendientes este mes');
+      if (due.total > summarize(s.transactions).available) throw new Error('Saldo insuficiente para pagar las deudas del mes');
+      for (const p of due.payments) {
+        const debt = s.debts.find((d) => d.id === p.debt_id);
+        debt.balance = round2(debt.balance - p.amount);
+        s.transactions.push({ id: id(), type: 'debt_payment', amount: p.amount, category: 'Deuda', note: p.name, debt_id: p.debt_id, income_id: null, occurred_on: date, created_at: now() });
+      }
+      write(s);
+      return { total: due.total, payments: due.payments };
     },
     async addExpense({ amount, category, note, date }) {
       const s = read();
       s.transactions.push({ id: id(), type: 'expense', amount, category, note, occurred_on: date, created_at: now() });
       write(s);
     },
-    // Mismas reglas que delete_transaction() en supabase/migrations/002.
+    // Mismas reglas que delete_transaction() en supabase/migrations/003.
     async deleteTransaction(txId) {
       const s = read();
       const t = s.transactions.find((x) => x.id === txId);
       if (!t) throw new Error('Movimiento no encontrado');
-      if (t.type === 'debt_payment') throw new Error('Una cuota se elimina junto con el ingreso que la generó');
+      if (t.income_id) throw new Error('Este movimiento se elimina junto con el ingreso que lo generó');
 
+      const restore = (p) => {
+        const debt = s.debts.find((d) => d.id === p.debt_id);
+        if (debt) debt.balance = round2(Math.min(debt.total, debt.balance + p.amount));
+      };
       if (t.type === 'income') {
-        const payments = s.transactions.filter((x) => x.income_id === t.id);
-        const paid = payments.reduce((a, p) => a + p.amount, 0);
-        if (summarize(s.transactions).available - (t.amount - paid) < 0) {
+        const children = s.transactions.filter((x) => x.income_id === t.id);
+        const taken = children.reduce((a, p) => a + p.amount, 0);
+        if (summarize(s.transactions).available - (t.amount - taken) < 0) {
           throw new Error('No podés eliminar este ingreso: ya gastaste ese dinero');
         }
-        for (const p of payments) {
-          const debt = s.debts.find((d) => d.id === p.debt_id);
-          if (debt) debt.balance = round2(Math.min(debt.total, debt.balance + p.amount));
-        }
+        children.filter((p) => p.type === 'debt_payment').forEach(restore);
+      } else if (t.type === 'debt_payment') {
+        restore(t);
       }
       s.transactions = s.transactions.filter((x) => x.id !== t.id && x.income_id !== t.id);
       write(s);

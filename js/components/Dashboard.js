@@ -1,5 +1,5 @@
 import { html, useState, useEffect, useMemo, useRef, useCallback } from '../deps.js';
-import { summarize, monthOf, shiftMonth, savingTarget, round2 } from '../finance.js';
+import { summarize, monthOf, shiftMonth, round2 } from '../finance.js';
 import { money, monthLabel, todayISO } from '../format.js';
 import { useCountUp } from '../hooks.js';
 import { Icon, Logo } from './Icons.js';
@@ -28,16 +28,15 @@ function Hero({ available, month, debtBalance, onEntry }) {
 }
 
 function Notice({ notice, savingPct, onClose }) {
-  const saving = savingTarget(notice.amount, savingPct);
+  const saving = notice.saving;
   return html`
     <div className="notice reveal" role="status">
       <span className="notice-icon"><${Icon} name=${saving ? 'piggy' : 'check'} size=${20} /></span>
       <div>
         ${saving
           ? html`<strong>Debes mover ${money(saving)} a tu plazo fijo / inversión</strong>
-                 <p>Es el ${savingPct}% de tu ingreso de ${money(notice.amount)}.</p>`
+                 <p>Es el ${savingPct}% de tu ingreso de ${money(notice.amount)}; ya se descontó de tu saldo.</p>`
           : html`<strong>Ingreso de ${money(notice.amount)} registrado</strong>`}
-        ${notice.debtPaid > 0 && html`<p>Se descontaron ${money(notice.debtPaid)} de cuotas de deuda; quedan ${money(notice.net)} disponibles.</p>`}
       </div>
       <button type="button" className="icon-btn" onClick=${onClose} aria-label="Cerrar aviso"><${Icon} name="x" size=${18} /></button>
     </div>`;
@@ -124,8 +123,12 @@ export function Dashboard({ store, user, onLogout }) {
   const submitEntry = async ({ type, amount, category, note }) => {
     const date = todayISO();
     if (type === 'income') {
+      if (timer.current) {
+        clearTimeout(timer.current);
+        await persistPct(); // el ahorro se calcula en el servidor con el % ya guardado
+      }
       const result = await store.addIncome({ amount, note, date });
-      setNotice({ amount, debtPaid: round2(amount - result.net), net: result.net, id: Date.now() });
+      setNotice({ amount, saving: round2(result.saving), id: Date.now() });
     } else {
       if (amount > summarize(data.txs).available) throw new Error('Saldo insuficiente para este gasto.');
       await store.addExpense({ amount, category, note, date });
@@ -141,6 +144,15 @@ export function Dashboard({ store, user, onLogout }) {
     await store.addDebt(debt);
     await refresh();
     notify('Deuda agregada');
+  };
+  const payMonthDebts = async () => {
+    try {
+      const result = await store.payMonthDebts({ date: todayISO() });
+      await refresh();
+      notify(`Deuda del mes pagada: ${money(result.total)}`);
+    } catch (err) {
+      notify(err.message, true);
+    }
   };
   const removeDebt = guarded((id) => store.deleteDebt(id), 'Deuda eliminada');
 
@@ -167,7 +179,7 @@ export function Dashboard({ store, user, onLogout }) {
             <${Hero} available=${all.available} month=${monthSummary} debtBalance=${debtBalance} onEntry=${setEntry} />
 
             ${entry &&
-            html`<${EntryForm} key=${entry} type=${entry} debts=${data.debts} savingPct=${savingPct} available=${all.available}
+            html`<${EntryForm} key=${entry} type=${entry} savingPct=${savingPct} available=${all.available}
                    onSubmit=${submitEntry} onCancel=${() => setEntry(null)} />`}
 
             <section className="card">
@@ -181,9 +193,9 @@ export function Dashboard({ store, user, onLogout }) {
           </div>
 
           <div className="col">
-            <${SavingCard} pct=${savingPct} status=${saveStatus} month=${month} monthIncome=${monthSummary.income} onChange=${changePct} />
+            <${SavingCard} pct=${savingPct} status=${saveStatus} month=${month} monthIncome=${monthSummary.income} monthSaving=${monthSummary.saving} onChange=${changePct} />
             <${History} txs=${data.txs} month=${month} onDelete=${removeTx} />
-            <${Debts} debts=${data.debts} onAdd=${addDebt} onDelete=${removeDebt} />
+            <${Debts} debts=${data.debts} txs=${data.txs} available=${all.available} onAdd=${addDebt} onDelete=${removeDebt} onPayMonth=${payMonthDebts} />
           </div>
         </div>
       </main>

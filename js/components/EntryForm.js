@@ -1,9 +1,9 @@
 import { html, useState, useEffect, useRef } from '../deps.js';
-import { planIncome, savingTarget, round2 } from '../finance.js';
+import { savingTarget, round2 } from '../finance.js';
 import { CATEGORIES, money } from '../format.js';
 import { Icon } from './Icons.js';
 
-export function EntryForm({ type, debts, savingPct, available, onSubmit, onCancel }) {
+export function EntryForm({ type, savingPct, available, onSubmit, onCancel }) {
   const income = type === 'income';
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState(CATEGORIES[0]);
@@ -19,11 +19,8 @@ export function EntryForm({ type, debts, savingPct, available, onSubmit, onCance
 
   let hint = null;
   if (valid && income) {
-    const plan = planIncome(debts, n);
-    const parts = [];
-    if (plan.debtPaid > 0) parts.push(`Se descontarán ${money(plan.debtPaid)} de cuotas · te quedan ${money(plan.net)}.`);
-    if (savingPct > 0) parts.push(`Meta de ahorro: ${money(savingTarget(n, savingPct))}.`);
-    hint = parts.join(' ') || null;
+    const saving = savingTarget(n, savingPct);
+    hint = saving > 0 ? `Se apartarán ${money(saving)} para ahorro (${savingPct}%) · te quedan ${money(round2(n - saving))}.` : null;
   } else if (valid) {
     hint = n > available ? `Supera tu saldo disponible (${money(available)}).` : `Te quedarán ${money(available - n)} disponibles.`;
   }

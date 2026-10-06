@@ -1,9 +1,9 @@
 import { html, useState } from '../deps.js';
-import { round2 } from '../finance.js';
-import { money } from '../format.js';
+import { round2, dueDebts } from '../finance.js';
+import { money, todayISO } from '../format.js';
 import { Icon } from './Icons.js';
 
-export function Debts({ debts, onAdd, onDelete }) {
+export function Debts({ debts, txs, available, onAdd, onDelete, onPayMonth }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [total, setTotal] = useState('');
@@ -11,8 +11,18 @@ export function Debts({ debts, onAdd, onDelete }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [confirmId, setConfirmId] = useState(null);
+  const [paying, setPaying] = useState(false);
 
   const pending = round2(debts.reduce((a, d) => a + d.balance, 0));
+  const due = dueDebts(debts, txs, todayISO().slice(0, 7));
+  const hasActive = debts.some((d) => d.balance > 0);
+  const short = due.total > available;
+
+  const payMonth = async () => {
+    setPaying(true);
+    await onPayMonth(); // Dashboard muestra el resultado o el error
+    setPaying(false);
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -41,6 +51,19 @@ export function Debts({ debts, onAdd, onDelete }) {
         <span className="card-title"><span className="card-icon"><${Icon} name="card" size=${18} /></span><h2>Deudas</h2></span>
         <span className="collapse-meta">${debts.length ? money(pending) : 'Sin deudas'}<${Icon} name="chevron" size=${18} /></span>
       </button>
+
+      ${hasActive &&
+      html`
+        <div className="pay-month">
+          ${due.total > 0
+            ? html`<small className=${'muted' + (short ? ' warn' : '')}>
+                  Cuotas del mes: ${money(due.total)}${short ? ` · supera tu saldo (${money(available)})` : ' · se descuentan de tu saldo'}
+                </small>
+                <button type="button" className="btn primary" disabled=${paying || short} onClick=${payMonth}>
+                  <${Icon} name="check" size=${18} /> ${paying ? 'Pagando…' : 'Deuda del mes pagada'}
+                </button>`
+            : html`<small className="muted"><${Icon} name="check" size=${14} /> Las cuotas de este mes ya están pagadas.</small>`}
+        </div>`}
 
       ${open &&
       html`

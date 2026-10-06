@@ -1,19 +1,19 @@
 import { html } from '../deps.js';
-import { savingTarget } from '../finance.js';
 import { money, monthLabel } from '../format.js';
 import { Icon } from './Icons.js';
 
-export function SavingCard({ pct, status, month, monthIncome, onChange }) {
+export function SavingCard({ pct, status, month, monthIncome, monthSaving, onChange }) {
   const set = (raw) => onChange(Math.min(100, Math.max(0, Math.round(parseFloat(raw) || 0))));
 
   let summary;
-  if (!(pct > 0)) summary = html`<p className="muted">Indicá qué porcentaje de tus ingresos querés ahorrar.</p>`;
-  else if (monthIncome <= 0) summary = html`<p className="muted">Cuando registres un ingreso, acá verás cuánto corresponde ahorrar con ${pct}%.</p>`;
+  if (!(pct > 0)) summary = html`<p className="muted">Indicá qué porcentaje de cada ingreso querés ahorrar: se descuenta de tu saldo.</p>`;
+  else if (monthIncome <= 0) summary = html`<p className="muted">Con cada ingreso se apartará el ${pct}% para ahorro y se descontará de tu saldo.</p>`;
   else
     summary = html`
       <div className="saving-result">
         <small>Ingresos de ${monthLabel(month)}: ${money(monthIncome)}</small>
-        <strong>Ahorrá ${money(savingTarget(monthIncome, pct))}</strong>
+        <strong>Ahorrado ${money(monthSaving)}</strong>
+        <small>Se aparta el ${pct}% de cada ingreso nuevo y se descuenta de tu saldo.</small>
       </div>`;
 
   return html`

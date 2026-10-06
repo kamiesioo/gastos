@@ -9,13 +9,14 @@ const KIND = {
   income: { icon: 'arrowUp', cls: 'income', sign: '+' },
   expense: { icon: 'arrowDown', cls: 'expense', sign: '-' },
   debt_payment: { icon: 'minus', cls: 'debt', sign: '-' },
+  saving: { icon: 'piggy', cls: 'saving', sign: '-' },
 };
 
 function Row({ t, kids, confirming, busy, onAskDelete, onCancel, onConfirm }) {
   const k = KIND[t.type];
   const title = t.type === 'debt_payment' ? `Cuota · ${t.note}` : t.category || 'Ingreso';
-  const sub = t.type === 'debt_payment' ? null : t.note;
-  const removable = t.type !== 'debt_payment';
+  const sub = t.type === 'debt_payment' || t.type === 'saving' ? null : t.note;
+  const removable = !t.income_id;
 
   return html`
     <li className=${'tx' + (confirming ? ' confirming' : '')}>
@@ -33,14 +34,14 @@ function Row({ t, kids, confirming, busy, onAskDelete, onCancel, onConfirm }) {
       ${kids.map(
         (c) => html`
           <div className="tx-kid" key=${c.id}>
-            <span>Cuota · ${c.note}</span><span className="amount debt">-${money(c.amount)}</span>
+            <span>${c.type === 'saving' ? 'Ahorro' : `Cuota · ${c.note}`}</span><span className=${'amount ' + KIND[c.type].cls}>-${money(c.amount)}</span>
           </div>`,
       )}
 
       ${confirming &&
       html`
         <div className="confirm" role="alertdialog">
-          <span>${t.type === 'income' && kids.length ? '¿Eliminar este ingreso? Se restauran las cuotas descontadas.' : '¿Eliminar este movimiento?'}</span>
+          <span>${t.type === 'income' && kids.length ? '¿Eliminar este ingreso? Se quitan también su ahorro y cuotas descontadas.' : t.type === 'debt_payment' ? '¿Eliminar este pago? La deuda recupera su saldo.' : '¿Eliminar este movimiento?'}</span>
           <div>
             <button type="button" className="btn small danger-solid" disabled=${busy} onClick=${onConfirm}>${busy ? 'Eliminando…' : 'Eliminar'}</button>
             <button type="button" className="btn small ghost" disabled=${busy} onClick=${onCancel}>Cancelar</button>
@@ -57,15 +58,16 @@ export function History({ txs, month, onDelete }) {
   // Los pagos de cuota se muestran dentro del ingreso que los generó.
   const rows = useMemo(() => {
     const inMonth = txs.filter((t) => monthOf(t.occurred_on) === month);
-    const parentIds = new Set(inMonth.filter((t) => t.type !== 'debt_payment').map((t) => t.id));
+    const parentIds = new Set(inMonth.filter((t) => !t.income_id).map((t) => t.id));
+    const isKid = (t) => t.income_id && parentIds.has(t.income_id);
     const kids = new Map();
     for (const t of inMonth) {
-      if (t.type === 'debt_payment' && parentIds.has(t.income_id)) {
+      if (isKid(t)) {
         kids.set(t.income_id, [...(kids.get(t.income_id) || []), t]);
       }
     }
     return inMonth
-      .filter((t) => t.type !== 'debt_payment' || !parentIds.has(t.income_id))
+      .filter((t) => !isKid(t))
       .map((t) => ({ t, kids: kids.get(t.id) || [] }));
   }, [txs, month]);
 

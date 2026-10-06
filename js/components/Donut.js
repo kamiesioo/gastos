@@ -12,6 +12,7 @@ export function Donut({ month, summary, hasAnyData }) {
       { key: 'available', label: 'Ingresos netos disponibles', short: 'Disponible', value: Math.max(summary.available, 0), color: 'var(--green)' },
       { key: 'expense', label: 'Egresos / gastos', short: 'Gastos', value: summary.expense, color: 'var(--red)' },
       { key: 'debt', label: 'Pago de deudas', short: 'Deudas', value: summary.debtPaid, color: 'var(--blue)' },
+      { key: 'saving', label: 'Ahorro', short: 'Ahorro', value: summary.saving, color: 'var(--yellow)' },
     ],
     [summary],
   );

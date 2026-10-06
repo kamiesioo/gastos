@@ -13,6 +13,7 @@
   --green: #10b981;
   --red: #f43f5e;
   --blue: #3b82f6;
+  --yellow: #f5b301;
   --hero-1: #0f172a;
   --hero-2: #1e3a8a;
   --notice-bg: #ecfdf5;
@@ -38,6 +39,7 @@
     --green: #34d399;
     --red: #fb7185;
     --blue: #60a5fa;
+    --yellow: #fbbf24;
     --hero-1: #16213a;
     --hero-2: #1d3a8a;
     --notice-bg: #0c2a21;
@@ -266,6 +268,7 @@ input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 4px co
 .tx-icon { display: grid; place-items: center; width: 34px; height: 34px; flex: none; border-radius: 11px; }
 .tx-icon.income { color: var(--green); background: color-mix(in srgb, var(--green) 14%, transparent); }
 .tx-icon.expense { color: var(--red); background: color-mix(in srgb, var(--red) 14%, transparent); }
+.tx-icon.saving { color: var(--yellow); background: color-mix(in srgb, var(--yellow) 18%, transparent); }
 .tx-icon.debt { color: var(--blue); background: color-mix(in srgb, var(--blue) 14%, transparent); }
 .tx-what { flex: 1; min-width: 0; }
 .tx-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -274,6 +277,7 @@ input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 4px co
 .amount.income { color: var(--green); }
 .amount.expense { color: var(--red); }
 .amount.debt { color: var(--blue); }
+.amount.saving { color: var(--yellow); }
 .tx-kid { display: flex; justify-content: space-between; margin: -4px 0 10px 46px; padding-left: 12px; border-left: 2px solid var(--border); font-size: 13px; color: var(--muted); }
 .tx-kid .amount { font-weight: 600; }
 .confirm {
@@ -344,3 +348,9 @@ input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 4px co
   .auth-pitch p { color: rgb(255 255 255 / .68); font-size: 14px; }
   .feat-icon { display: grid; place-items: center; width: 38px; height: 38px; flex: none; border-radius: 12px; background: rgb(255 255 255 / .12); border: 1px solid rgb(255 255 255 / .16); }
 }
+
+/* ---- pago de la deuda del mes */
+.pay-month { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.pay-month .btn { justify-content: center; }
+.pay-month small { display: flex; align-items: center; gap: 6px; }
+.pay-month small.warn { color: var(--red); }

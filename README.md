@@ -6,9 +6,10 @@ React 18 se carga como módulo ES desde esm.sh y las plantillas usan [htm](https
 
 ## Puesta en marcha
 
-1. En Supabase → **SQL Editor**, ejecutá en orden (ambas se pueden re-ejecutar sin perder datos):
+1. En Supabase → **SQL Editor**, ejecutá en orden (todas se pueden re-ejecutar sin perder datos):
    1. [`supabase/migrations/001_init.sql`](supabase/migrations/001_init.sql) — tablas, RLS y funciones de escritura.
    2. [`supabase/migrations/002_profiles_audit_delete.sql`](supabase/migrations/002_profiles_audit_delete.sql) — perfiles de usuario, bitácora, borrado de movimientos y vistas de control.
+   3. [`supabase/migrations/003_saving_and_monthly_debt.sql`](supabase/migrations/003_saving_and_monthly_debt.sql) — ahorro descontado del saldo y pago manual de la deuda del mes.
 2. [`js/config.js`](js/config.js) ya apunta al proyecto (URL + publishable key, ambas públicas).
 3. Serví la carpeta (los módulos ES no andan desde `file://`):
 
@@ -41,13 +42,18 @@ supabase/migrations/  SQL
 - El cliente usa solo la **publishable key**. La **secret key** (`sb_secret_…`) se saltea RLS y nunca debe estar en esta carpeta.
 - La política CSP de `index.html` solo permite scripts propios y de esm.sh, y conexiones a `*.supabase.co`.
 
+## Ahorro y deuda del mes
+
+- **Ahorro**: con cada ingreso se aparta el % de la meta de ahorro y se descuenta del saldo disponible (porción amarilla del gráfico). Cambiar el % sólo afecta a los ingresos nuevos.
+- **Deuda**: las cuotas ya no se descuentan solas. El botón **Deuda del mes pagada** (tarjeta Deudas) paga la cuota de cada deuda activa, una vez por mes, y la descuenta del saldo (porción azul).
+
 ## Quitar movimientos
 
 Cada ingreso o gasto tiene un botón de eliminar (con confirmación).
 
 - **Gasto**: el dinero vuelve al disponible.
-- **Ingreso**: se deshacen también las cuotas que descontó y se restaura el saldo de las deudas. No se permite si ese dinero ya se gastó (el disponible quedaría negativo).
-- Las cuotas no se borran solas: se eliminan junto con su ingreso.
+- **Ingreso**: se quita también su ahorro. No se permite si ese dinero ya se gastó (el disponible quedaría negativo).
+- **Pago de cuota**: se puede eliminar y la deuda recupera su saldo.
 
 ## Control de usuarios y movimientos (para vos)
 
