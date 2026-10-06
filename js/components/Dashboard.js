@@ -86,9 +86,14 @@ export function Dashboard({ store, user, onLogout }) {
       await store.saveSavingPct(pctRef.current);
       if (!timer.current) dirty.current = false;
       setSaveStatus('Guardado ✓');
+      await refresh(); // el ahorro de los ingresos del mes se recalculó
     } catch (err) {
       setSaveStatus('');
       notify(err.message, true);
+      if (!timer.current) {
+        dirty.current = false;
+        await refresh().catch(() => {}); // volver al % que sí quedó guardado
+      }
     }
   };
 

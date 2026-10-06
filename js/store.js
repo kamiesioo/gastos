@@ -183,7 +183,17 @@ function createLocalStore() {
     },
     async saveSavingPct(pct) {
       const s = read();
+      const ym = monthOf(now());
+      const month = s.transactions.filter((t) => t.type === 'income' && monthOf(t.occurred_on) === ym);
+      const rest = s.transactions.filter((t) => !(t.type === 'saving' && month.some((i) => i.id === t.income_id)));
+      const resaved = month
+        .map((i) => ({ i, saving: savingTarget(i.amount, pct) }))
+        .filter((x) => x.saving > 0)
+        .map(({ i, saving }) => ({ id: id(), type: 'saving', amount: saving, category: 'Ahorro', note: null, income_id: i.id, occurred_on: i.occurred_on, created_at: now() }));
+      const next = [...rest, ...resaved];
+      if (summarize(next).available < 0) throw new Error('Con ese porcentaje el saldo quedaría en negativo');
       s.savingPct = pct;
+      s.transactions = next;
       write(s);
     },
   };

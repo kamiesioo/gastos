@@ -13,7 +13,7 @@ export function SavingCard({ pct, status, month, monthIncome, monthSaving, onCha
       <div className="saving-result">
         <small>Ingresos de ${monthLabel(month)}: ${money(monthIncome)}</small>
         <strong>Ahorrado ${money(monthSaving)}</strong>
-        <small>Se aparta el ${pct}% de cada ingreso nuevo y se descuenta de tu saldo.</small>
+        <small>Se aparta el ${pct}% de los ingresos del mes y se descuenta de tu saldo; si cambiás el % se recalcula.</small>
       </div>`;
 
   return html`
